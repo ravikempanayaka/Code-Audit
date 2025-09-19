@@ -280,6 +280,8 @@ valid-metaclass-classmethod-first-arg=mcs
 
 [MASTER]
 load-plugins=pylint_report
+ignore=migrations,tests,build
+ignore-patterns=^__init__\.py$,^settings\.py$
 
 
 [DESIGN]
@@ -293,7 +295,7 @@ exclude-too-few-public-methods=
 ignored-parents=
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=20
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7

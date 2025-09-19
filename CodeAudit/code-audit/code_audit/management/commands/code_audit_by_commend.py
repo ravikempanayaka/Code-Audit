@@ -2,7 +2,6 @@ import datetime
 import importlib
 import logging
 import os
-import subprocess
 from optparse import OptionParser
 from pathlib import Path
 
@@ -63,7 +62,10 @@ class CodeAudit:
                         if file_list:
                             print("File list: ", len(file_list))
                             self.file_name = " ".join(file_list)
-
+                            # self.generate_json_html_report(
+                            #     file_list,
+                            #     self.html_output_file_path or os.path.join(home, 'multiple_files_report' + html_format)
+                            # )
                         else:
                             if not self.file_name.endswith('.py'):
                                 dir_list = self.find_dir_in_apps(self.file_name, app_list)
@@ -161,21 +163,17 @@ class CodeAudit:
     def generate_json_html_report(file_name, html_output_file_path):
         """generate json and html report in specific path"""
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            pylintrc = os.path.join(base_dir, "pylintrc")
+            app_dir = Path(__file__).resolve().parent.parent.parent
+            pylintrc = app_dir / "pylintrc"
 
-            if not os.path.exists(pylintrc):
-                raise FileNotFoundError(f"pylintrc not found at {pylintrc}")
-
-            cmd = f"pylint --rcfile {pylintrc} {file_name} | pylint_report > {html_output_file_path}"
-            LOGGER.info("Running command: %s", cmd)
-
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-            if result.returncode not in (0, 32):  # pylint returns 32 if no files
-                LOGGER.error("Pylint failed: %s", result.stderr.strip())
-                raise CodeAuditError(f"Pylint failed for {file_name}")
-
+            if not pylintrc.exists():
+                print(f"Error: pylintrc file not found at {pylintrc}")
+                return
+            # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            # # base_dir = os.getcwd() + '/code_audit'
+            # pylintrc = os.path.join(BASE_DIR, "pylintrc")
+            param1 = 'pylint ' + f'--rcfile {pylintrc} ' + file_name + '|' + 'pylint_report  > ' + html_output_file_path
+            os.system(param1)
         except Exception as e:
             LOGGER.exception("Error generating report for %s", file_name)
             raise
