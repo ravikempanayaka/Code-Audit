@@ -16,6 +16,7 @@ class CodeAuditReport(models.Model):
     module_name = models.CharField(max_length=255, help_text='filter module name')
     file_name = models.CharField(max_length=255, blank=True, null=True, help_text="Python file or app to audit")
     file_author = models.CharField(max_length=100, blank=True, null=True)
+    git_user = models.CharField(max_length=100, blank=True, null=True)
     last_run = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=50, default="Not Run")
     report_path = models.TextField(blank=True, null=True, default='/tmp/')  # can store multiple reports

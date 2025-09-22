@@ -30,10 +30,17 @@ class Command(BaseCommand):
             default=8.0,
             help='Minimum score required to pass the audit'
         )
+        parser.add_argument(
+            "--git-user", "-u",
+            nargs="?",  # optional value
+            const=True,  # if provided without value
+            help="Git username/email to filter files. If no value is given, uses current git config user.name"
+        )
 
     def handle(self, *args, **options):
         file_path = options.get('file')
         file_author = options.get('file_author')
+        git_user = options.get('git_user')
         fail_under = options['fail_under']
 
         if file_path:
@@ -47,11 +54,18 @@ class Command(BaseCommand):
             path_obj = Path(file_path)
             base_dir = path_obj.parts[0] if path_obj.parts else file_path
 
-        pylint_score = self.run_audit(file_path, base_dir, level="file", file_author=file_author)
+        try:
+            pylint_score = self.run_audit(file_path, base_dir, level="file", file_author=file_author,
+                                          git_user=git_user)
+        except Exception as ex_err:
+            self.stderr.write(self.style.ERROR(
+                f"❌ An unexpected error occurred: {ex_err}"
+            ))
+            return None
 
         # Extract score from pylint report
         # (or use your existing logic)
-        score = 10.0 if pylint_score == 0 else 5.0
+        score = pylint_score if pylint_score else 0.0
 
         if score < fail_under:
             self.stderr.write(self.style.ERROR(
@@ -62,14 +76,16 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(
                 f"✅ Audit passed. Score {score}"
             ))
+            return str(score)
 
-    def run_audit(self, file_path, module_name, level="file", file_author=None):
+    def run_audit(self, file_path, module_name, level="file", file_author=None, git_user=False):
         """Run audit via CodeAudit.process()"""
         # audit = CodeAudit()
         self.audit.file_name = file_path if level == "file" else None
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.audit.output_filepath = f"/tmp/{module_name}_{level}_audit_{timestamp}.html"
         self.audit.file_author = file_author
+        self.audit.git_user = git_user
         self.audit.html_output_file_path = None  # let CodeAudit decide
         reports = []
 
